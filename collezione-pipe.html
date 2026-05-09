@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pipe">
+<meta name="theme-color" content="#4A2E15">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>La Mia Collezione di Pipe</title>
+<style>
+:root {
+  --tobacco: #8B5E3C;
+  --tobacco-light: #C49A6C;
+  --tobacco-dark: #4A2E15;
+  --cream: #F5EFE6;
+  --ash: #B5A898;
+  --ember: #C0392B;
+  --page: #F2EBE0;
+  --white: #FFFFFF;
+  --ink: #2C1810;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height:100%; overflow:hidden; font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; background:var(--page); color:var(--ink); font-size:15px; }
+.app { display:flex; flex-direction:column; height:100vh; height:-webkit-fill-available; }
+
+/* TOPBAR */
+.topbar { background:var(--tobacco-dark); padding:calc(var(--safe-top) + 12px) 16px 12px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; z-index:10; }
+.topbar-title { font-size:1.1rem; font-weight:600; color:var(--cream); }
+.topbar-right { display:flex; align-items:center; gap:8px; }
+.count-badge { background:var(--tobacco); color:var(--cream); font-size:0.72rem; padding:2px 9px; border-radius:10px; }
+.icon-btn { width:34px; height:34px; border-radius:8px; border:none; background:rgba(255,255,255,0.12); color:var(--cream); font-size:1.15rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.icon-btn:active { background:rgba(255,255,255,0.25); }
+
+/* SCROLL */
+.scroll-area { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 14px calc(var(--safe-bot) + 80px); }
+
+/* EMPTY */
+.empty { text-align:center; padding:60px 30px; color:var(--ash); }
+.empty-icon { font-size:4rem; margin-bottom:16px; }
+.empty p { font-size:0.95rem; line-height:1.6; }
+.empty-cta { margin-top:20px; background:var(--tobacco-dark); color:var(--cream); border:none; padding:12px 24px; border-radius:10px; font-size:0.9rem; cursor:pointer; }
+
+/* GRID */
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(min-width:500px){ .grid { grid-template-columns:repeat(3,1fr); } }
+
+/* CARD */
+.pipe-card { background:var(--white); border-radius:14px; overflow:hidden; box-shadow:0 2px 8px rgba(74,46,21,0.1); cursor:pointer; }
+.pipe-card:active { opacity:0.85; }
+.card-photo { width:100%; aspect-ratio:4/3; object-fit:cover; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:2.8rem; color:rgba(139,94,60,0.22); overflow:hidden; }
+.card-photo img { width:100%; height:100%; object-fit:cover; }
+.card-info { padding:10px 10px 12px; }
+.card-name { font-size:0.88rem; font-weight:600; color:var(--tobacco-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+.card-marca { font-size:0.72rem; color:var(--tobacco); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-tag { display:inline-block; background:var(--page); color:var(--ash); font-size:0.62rem; padding:1px 6px; border-radius:4px; margin-top:5px; }
+.card-stars { font-size:0.72rem; margin-top:3px; }
+.s-on { color:var(--tobacco-light); } .s-off { color:rgba(139,94,60,0.18); }
+
+/* FAB */
+.fab { position:fixed; bottom:calc(var(--safe-bot) + 24px); right:20px; width:58px; height:58px; border-radius:50%; background:var(--tobacco-dark); color:var(--cream); font-size:1.8rem; border:none; box-shadow:0 4px 16px rgba(74,46,21,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:50; line-height:1; }
+.fab:active { transform:scale(0.93); }
+
+/* OVERLAY + SHEET */
+.overlay { position:fixed; inset:0; background:rgba(26,8,3,0.55); z-index:100; display:none; align-items:flex-end; }
+.overlay.open { display:flex; }
+.sheet { background:var(--white); border-radius:20px 20px 0 0; width:100%; max-height:92vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--safe-bot) + 20px); transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); }
+.overlay.open .sheet { transform:translateY(0); }
+.handle { width:36px; height:4px; background:rgba(139,94,60,0.22); border-radius:2px; margin:12px auto 4px; }
+.sh-header { padding:10px 20px 14px; border-bottom:1px solid rgba(139,94,60,0.1); display:flex; align-items:center; justify-content:space-between; }
+.sh-title { font-size:1.05rem; font-weight:600; color:var(--tobacco-dark); }
+.sh-close { width:28px; height:28px; border-radius:50%; background:var(--page); border:none; color:var(--ash); font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.sh-body { padding:16px 20px; }
+
+/* FORM */
+.frow { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--tobacco); margin-bottom:5px; }
+.field input, .field select, .field textarea { width:100%; padding:11px 13px; border:1.5px solid rgba(139,94,60,0.2); border-radius:10px; font-size:0.95rem; font-family:inherit; color:var(--ink); background:var(--page); outline:none; -webkit-appearance:none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--tobacco-light); background:#fff; }
+.field textarea { resize:none; min-height:80px; }
+.stars-inp { display:flex; gap:8px; margin-top:2px; }
+.star-t { font-size:1.8rem; cursor:pointer; color:rgba(139,94,60,0.2); line-height:1; }
+.star-t.on { color:var(--tobacco-light); }
+.photo-box { border:2px dashed rgba(139,94,60,0.25); border-radius:12px; padding:18px; text-align:center; position:relative; background:var(--page); }
+.photo-box input[type=file] { position:absolute; inset:0; opacity:0; width:100%; height:100%; border:none; padding:0; }
+.photo-lbl { font-size:0.88rem; color:var(--ash); pointer-events:none; }
+.photo-lbl span { display:block; font-size:2rem; margin-bottom:4px; }
+.photo-thumb { width:100%; max-height:130px; object-fit:cover; border-radius:8px; margin-top:10px; display:none; }
+.submit-btn { width:100%; background:var(--tobacco-dark); color:var(--cream); border:none; padding:14px; border-radius:12px; font-size:1rem; font-weight:600; cursor:pointer; margin-top:8px; }
+.submit-btn:active { background:var(--tobacco); }
+
+/* DETAIL */
+.det-photo { width:100%; max-height:220px; object-fit:cover; display:block; }
+.det-nophoto { width:100%; height:160px; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:5rem; color:rgba(139,94,60,0.2); }
+.det-body { padding:18px 20px; }
+.det-name { font-size:1.3rem; font-weight:700; color:var(--tobacco-dark); margin-bottom:2px; }
+.det-marca { font-size:0.85rem; color:var(--tobacco); margin-bottom:10px; }
+.det-stars { font-size:1.1rem; margin-bottom:10px; }
+.det-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.det-tag { background:var(--page); color:var(--tobacco-dark); font-size:0.75rem; padding:4px 10px; border-radius:6px; font-weight:500; }
+.tag-Eccellente{background:#d4edda!important;color:#1a5c2a!important;} .tag-Ottimo{background:#cce5ff!important;color:#1a3c5c!important;} .tag-Buono{background:#fff3cd!important;color:#6b4c00!important;} .tag-Discreto{background:#f8d7da!important;color:#6b1a1a!important;} .tag-Da-restaurare{background:#f0e0d0!important;color:#6b3a10!important;}
+.det-lbl { font-size:0.68rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--ash); margin-top:12px; margin-bottom:3px; }
+.det-val { font-size:0.92rem; line-height:1.5; }
+.det-actions { display:flex; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid rgba(139,94,60,0.1); }
+.det-btn { flex:1; padding:11px; border-radius:10px; font-size:0.85rem; font-weight:600; border:none; cursor:pointer; }
+.det-btn:active { opacity:0.75; }
+.det-btn.edit { background:var(--page); color:var(--tobacco-dark); }
+.det-btn.del { background:rgba(192,57,43,0.1); color:var(--ember); }
+
+/* MENU */
+.menu-item { display:flex; align-items:center; gap:14px; padding:15px 20px; border-bottom:1px solid rgba(139,94,60,0.08); cursor:pointer; font-size:0.95rem; }
+.menu-item:active { background:var(--page); }
+.mi-icon { font-size:1.3rem; width:28px; text-align:center; }
+.mi-sub { font-size:0.75rem; color:var(--ash); margin-top:1px; }
+.menu-item.danger { color:var(--ember); }
+
+/* TOAST */
+.toast { position:fixed; bottom:calc(var(--safe-bot) + 90px); left:50%; transform:translateX(-50%) translateY(16px); background:var(--tobacco-dark); color:var(--cream); padding:9px 18px; border-radius:20px; font-size:0.85rem; opacity:0; transition:opacity 0.25s, transform 0.25s; pointer-events:none; z-index:200; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-title">🪵 La Mia Collezione</div>
+    <div class="topbar-right">
+      <span class="count-badge" id="countBadge">0 pipe</span>
+      <button class="icon-btn" onclick="openMenu()">⋯</button>
+    </div>
+  </div>
+  <div class="scroll-area" id="scrollArea">
+    <div id="emptyState" class="empty">
+      <div class="empty-icon">🪵</div>
+      <p>La collezione è ancora vuota.<br>Tocca <strong>+</strong> per aggiungere la prima pipa.</p>
+      <button class="empty-cta" onclick="openAdd()">➕ Aggiungi la prima pipa</button>
+    </div>
+    <div class="grid" id="grid" style="display:none;"></div>
+  </div>
+  <button class="fab" onclick="openAdd()">+</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SHEET AGGIUNGI/MODIFICA -->
+<div class="overlay" id="addSheet" onclick="overlayClick(event,'addSheet')">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sh-header">
+      <div class="sh-title" id="addTitle">Nuova Pipa</div>
+      <button class="sh-close" onclick="closeSheet('addSheet')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="frow">
+        <div class="field"><label>Nome / Modello *</label><input type="text" id="f-nome" placeholder="es. Billiard 320"></div>
+        <div class="field"><label>Produttore</label><input type="text" id="f-marca" placeholder="es. Savinelli"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Forma</label>
+          <select id="f-forma"><option value="">—</option><option>Billiard</option><option>Bent</option><option>Dublin</option><option>Calabash</option><option>Churchwarden</option><option>Pot</option><option>Apple / Roundhead</option><option>Freehand</option><option>Altra</option></select>
+        </div>
+        <div class="field"><label>Materiale</label>
+          <select id="f-materiale"><option value="">—</option><option>Radica</option><option>Meerschaum</option><option>Mais</option><option>Morta</option><option>Altro</option></select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Anno</label><input type="text" id="f-anno" placeholder="es. 2019"></div>
+        <div class="field"><label>Stato</label>
+          <select id="f-stato"><option value="">—</option><option>Eccellente</option><option>Ottimo</option><option>Buono</option><option>Discreto</option><option>Da restaurare</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Tabacco preferito</label><input type="text" id="f-tabacco" placeholder="es. Escudo, FVF…"></div>
+      <div class="field">
+        <label>Valutazione</label>
+        <div class="stars-inp" id="starsInp">
+          <span class="star-t" onclick="setRating(1)">★</span><span class="star-t" onclick="setRating(2)">★</span><span class="star-t" onclick="setRating(3)">★</span><span class="star-t" onclick="setRating(4)">★</span><span class="star-t" onclick="setRating(5)">★</span>
+        </div>
+      </div>
+      <div class="field"><label>Note personali</label><textarea id="f-note" placeholder="Provenienza, sensazioni, storia…"></textarea></div>
+      <div class="field">
+        <label>Foto</label>
+        <div class="photo-box">
+          <input type="file" accept="image/*" id="f-foto" onchange="handlePhoto(event)">
+          <div class="photo-lbl"><span>📷</span>Tocca per aggiungere una foto</div>
+          <img class="photo-thumb" id="photoThumb" alt="">
+        </div>
+      </div>
+      <button class="submit-btn" onclick="salvaPipa()">Salva nella collezione</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET DETTAGLIO -->
+<div class="overlay" id="detailSheet" onclick="overlayClick(event,'detailSheet')">
+  <div class="sheet"><div class="handle"></div><div id="detailContent"></div></div>
+</div>
+
+<!-- SHEET MENU -->
+<div class="overlay" id="menuSheet" onclick="overlayClick(event,'menuSheet')">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sh-header"><div class="sh-title">Menu</div><button class="sh-close" onclick="closeSheet('menuSheet')">✕</button></div>
+    <div class="menu-item" onclick="esporta();closeSheet('menuSheet')">
+      <span class="mi-icon">💾</span><div><div>Esporta backup</div><div class="mi-sub">Salva file JSON su iCloud Drive</div></div>
+    </div>
+    <label class="menu-item">
+      <span class="mi-icon">📂</span><div><div>Importa backup</div><div class="mi-sub">Ripristina da file JSON</div></div>
+      <input type="file" accept=".json" onchange="importa(event)" style="display:none;">
+    </label>
+    <div class="menu-item danger" onclick="svuota();closeSheet('menuSheet')">
+      <span class="mi-icon">🗑</span><div><div>Svuota collezione</div><div class="mi-sub">Elimina tutte le pipe</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var KEY='pipe_pwa_v1', rating=0, editId=null;
+
+function getCol(){try{return JSON.parse(localStorage.getItem(KEY))||[];}catch(e){return[];}}
+function setCol(d){localStorage.setItem(KEY,JSON.stringify(d));}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);}
+
+function openSheet(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeSheet(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+function overlayClick(e,id){if(e.target===document.getElementById(id))closeSheet(id);}
+
+function openAdd(){editId=null;resetForm();document.getElementById('addTitle').textContent='Nuova Pipa';openSheet('addSheet');}
+function openMenu(){openSheet('menuSheet');}
+
+function openEdit(id){
+  var p=getCol().find(function(x){return x.id===id;});if(!p)return;
+  editId=id;closeSheet('detailSheet');
+  document.getElementById('addTitle').textContent='Modifica Pipa';
+  document.getElementById('f-nome').value=p.nome||'';
+  document.getElementById('f-marca').value=p.marca||'';
+  document.getElementById('f-forma').value=p.forma||'';
+  document.getElementById('f-materiale').value=p.materiale||'';
+  document.getElementById('f-anno').value=p.anno||'';
+  document.getElementById('f-stato').value=p.stato||'';
+  document.getElementById('f-tabacco').value=p.tabacco||'';
+  document.getElementById('f-note').value=p.note||'';
+  rating=p.rating||0;updateStars();
+  if(p.foto){var th=document.getElementById('photoThumb');th.src=p.foto;th.style.display='block';}
+  openSheet('addSheet');
+}
+
+function openDetail(id){
+  var p=getCol().find(function(x){return x.id===id;});if(!p)return;
+  var stars='';for(var i=1;i<=5;i++)stars+='<span class="'+(i<=(p.rating||0)?'s-on':'s-off')+'">★</span>';
+  var foto=p.foto?'<img class="det-photo" src="'+p.foto+'" alt="">':'<div class="det-nophoto">🪵</div>';
+  var tags=[];
+  if(p.forma)tags.push('<span class="det-tag">'+p.forma+'</span>');
+  if(p.materiale)tags.push('<span class="det-tag">'+p.materiale+'</span>');
+  if(p.anno)tags.push('<span class="det-tag">'+p.anno+'</span>');
+  if(p.stato)tags.push('<span class="det-tag tag-'+p.stato.replace(/ /g,'-')+'">'+p.stato+'</span>');
+  document.getElementById('detailContent').innerHTML=
+    foto+
+    '<div class="det-body">'+
+      '<div class="det-name">'+p.nome+'</div>'+
+      (p.marca?'<div class="det-marca">'+p.marca+'</div>':'')+
+      (p.rating?'<div class="det-stars">'+stars+'</div>':'')+
+      (tags.length?'<div class="det-tags">'+tags.join('')+'</div>':'')+
+      (p.tabacco?'<div class="det-lbl">Tabacco preferito</div><div class="det-val">'+p.tabacco+'</div>':'')+
+      (p.note?'<div class="det-lbl">Note</div><div class="det-val">'+p.note+'</div>':'')+
+      (p.dataAggiunta?'<div class="det-lbl" style="margin-top:14px;">Aggiunta il</div><div class="det-val">'+p.dataAggiunta+'</div>':'')+
+      '<div class="det-actions">'+
+        '<button class="det-btn edit" onclick="openEdit('+p.id+')">✏️ Modifica</button>'+
+        '<button class="det-btn del" onclick="elimina('+p.id+')">🗑 Elimina</button>'+
+      '</div>'+
+    '</div>';
+  openSheet('detailSheet');
+}
+
+function resetForm(){
+  ['f-nome','f-marca','f-anno','f-tabacco','f-note'].forEach(function(id){document.getElementById(id).value='';});
+  ['f-forma','f-materiale','f-stato'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-foto').value='';
+  var th=document.getElementById('photoThumb');th.src='';th.style.display='none';
+  rating=0;updateStars();
+}
+
+function setRating(v){rating=(rating===v)?0:v;updateStars();}
+function updateStars(){document.querySelectorAll('.star-t').forEach(function(s,i){s.classList.toggle('on',i<rating);});}
+
+function handlePhoto(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){var th=document.getElementById('photoThumb');th.src=ev.target.result;th.style.display='block';};
+  r.readAsDataURL(f);
+}
+
+function salvaPipa(){
+  var nome=document.getElementById('f-nome').value.trim();
+  if(!nome){toast('⚠️ Inserisci il nome');return;}
+  var th=document.getElementById('photoThumb');
+  var foto=(th.src&&th.src.startsWith('data:'))?th.src:null;
+  var p={
+    id:editId||Date.now(),
+    nome:nome,
+    marca:document.getElementById('f-marca').value.trim(),
+    forma:document.getElementById('f-forma').value,
+    materiale:document.getElementById('f-materiale').value,
+    anno:document.getElementById('f-anno').value.trim(),
+    stato:document.getElementById('f-stato').value,
+    tabacco:document.getElementById('f-tabacco').value.trim(),
+    note:document.getElementById('f-note').value.trim(),
+    rating:rating,foto:foto,
+    dataAggiunta:new Date().toLocaleDateString('it-IT')
+  };
+  var col=getCol();
+  if(editId){
+    var idx=col.findIndex(function(x){return x.id===editId;});
+    if(idx!==-1){if(!p.foto)p.foto=col[idx].foto;col[idx]=p;}
+    toast('✓ Pipa aggiornata');
+  }else{
+    col.unshift(p);toast('✓ Pipa aggiunta');
+  }
+  setCol(col);closeSheet('addSheet');render();
+}
+
+function elimina(id){
+  if(!confirm('Eliminare questa pipa?'))return;
+  setCol(getCol().filter(function(p){return p.id!==id;}));
+  closeSheet('detailSheet');render();toast('Pipa eliminata');
+}
+
+function render(){
+  var col=getCol();
+  var n=col.length;
+  document.getElementById('countBadge').textContent=n+(n===1?' pipa':' pipe');
+  var empty=document.getElementById('emptyState');
+  var grid=document.getElementById('grid');
+  if(n===0){empty.style.display='block';grid.style.display='none';return;}
+  empty.style.display='none';grid.style.display='grid';
+  grid.innerHTML=col.map(function(p){
+    var foto=p.foto?'<div class="card-photo"><img src="'+p.foto+'" alt="'+p.nome+'"></div>':'<div class="card-photo">🪵</div>';
+    var stars='';if(p.rating)for(var i=1;i<=5;i++)stars+='<span class="'+(i<=p.rating?'s-on':'s-off')+'">★</span>';
+    return '<div class="pipe-card" onclick="openDetail('+p.id+')">'+foto+
+      '<div class="card-info">'+
+        '<div class="card-name">'+p.nome+'</div>'+
+        (p.marca?'<div class="card-marca">'+p.marca+'</div>':'')+
+        (p.forma?'<span class="card-tag">'+p.forma+'</span>':'')+
+        (stars?'<div class="card-stars">'+stars+'</div>':'')+
+      '</div></div>';
+  }).join('');
+}
+
+function esporta(){
+  var col=getCol();if(!col.length){toast('Collezione vuota');return;}
+  var blob=new Blob([JSON.stringify({version:1,data:col,esportato:new Date().toISOString()},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='pipe-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  toast('💾 Backup esportato');
+}
+
+function importa(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    try{
+      var parsed=JSON.parse(ev.target.result);
+      var data=parsed.data||parsed;
+      if(!Array.isArray(data))throw new Error('Formato non valido');
+      if(!confirm('Importare '+data.length+' pipe? I dati attuali verranno sostituiti.'))return;
+      setCol(data);render();toast('✓ '+data.length+' pipe importate');
+    }catch(err){alert('Errore: '+err.message);}
+  };
+  r.readAsText(f);e.target.value='';
+}
+
+function svuota(){
+  if(!confirm('Eliminare TUTTA la collezione?\n\nEsporta prima un backup!'))return;
+  setCol([]);render();toast('Collezione svuotata');
+}
+
+render();
+</script>
+</body>
+</html>
