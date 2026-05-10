@@ -127,9 +127,13 @@ html, body { height:100%; overflow:hidden; font-family:-apple-system,'Helvetica 
 <body>
 <div class="app">
   <div class="topbar">
-    <div class="topbar-title">🪵 La Mia Collezione</div>
+    <div class="topbar-title">🪵 Pipe</div>
     <div class="topbar-right">
       <span class="count-badge" id="countBadge">0 pipe</span>
+      <button class="icon-btn" onclick="esporta()" title="Esporta backup" style="font-size:0.9rem;width:auto;padding:0 8px;">💾</button>
+      <label class="icon-btn" style="font-size:0.9rem;width:auto;padding:0 8px;cursor:pointer;" title="Importa backup">
+        📂<input type="file" accept=".json" onchange="importa(event)" style="display:none;">
+      </label>
       <button class="icon-btn" onclick="openMenu()">⋯</button>
     </div>
   </div>
@@ -180,7 +184,7 @@ html, body { height:100%; overflow:hidden; font-family:-apple-system,'Helvetica 
           <span class="star-t" onclick="setRating(1)">★</span><span class="star-t" onclick="setRating(2)">★</span><span class="star-t" onclick="setRating(3)">★</span><span class="star-t" onclick="setRating(4)">★</span><span class="star-t" onclick="setRating(5)">★</span>
         </div>
       </div>
-      <div class="field"><label>Note personali</label><textarea id="f-note" placeholder="Provenienza, sensazioni, storia…"></textarea></div>
+      <div class="field"><label>Note personali</label><textarea id="f-note" placeholder="Provenienza, sensazioni, storia…" style="min-height:120px;"></textarea></div>
       <div class="field">
         <label>Foto</label>
         <div class="photo-box">
@@ -196,7 +200,14 @@ html, body { height:100%; overflow:hidden; font-family:-apple-system,'Helvetica 
 
 <!-- SHEET DETTAGLIO -->
 <div class="overlay" id="detailSheet" onclick="overlayClick(event,'detailSheet')">
-  <div class="sheet"><div class="handle"></div><div id="detailContent"></div></div>
+  <div class="sheet" style="max-height:96vh;display:flex;flex-direction:column;">
+    <div class="handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 10px;border-bottom:1px solid rgba(139,94,60,0.1);flex-shrink:0;">
+      <span style="font-size:0.9rem;font-weight:600;color:var(--tobacco-dark);">Dettaglio pipa</span>
+      <button onclick="closeSheet('detailSheet')" style="background:var(--page);border:none;border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;color:var(--ash);">✕</button>
+    </div>
+    <div id="detailContent" style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;"></div>
+  </div>
 </div>
 
 <!-- SHEET MENU -->
@@ -266,12 +277,13 @@ function openDetail(id){
       (p.rating?'<div class="det-stars">'+stars+'</div>':'')+
       (tags.length?'<div class="det-tags">'+tags.join('')+'</div>':'')+
       (p.tabacco?'<div class="det-lbl">Tabacco preferito</div><div class="det-val">'+p.tabacco+'</div>':'')+
-      (p.note?'<div class="det-lbl">Note</div><div class="det-val">'+p.note+'</div>':'')+
+      (p.note?'<div class="det-lbl">Note</div><div class="det-val" style="white-space:pre-wrap;">'+p.note+'</div>':'')+
       (p.dataAggiunta?'<div class="det-lbl" style="margin-top:14px;">Aggiunta il</div><div class="det-val">'+p.dataAggiunta+'</div>':'')+
       '<div class="det-actions">'+
         '<button class="det-btn edit" onclick="openEdit('+p.id+')">✏️ Modifica</button>'+
         '<button class="det-btn del" onclick="elimina('+p.id+')">🗑 Elimina</button>'+
       '</div>'+
+      '<div style="text-align:center;padding:10px 0 4px;"><button onclick="closeSheet(\047detailSheet\047)" style="background:none;border:none;color:var(--ash);font-size:0.8rem;cursor:pointer;">← Torna alla collezione</button></div>'+
     '</div>';
   openSheet('detailSheet');
 }
